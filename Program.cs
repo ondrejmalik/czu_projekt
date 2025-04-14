@@ -57,6 +57,7 @@ static void ListFilesInDirectory(string directory_choice)
 
 static bool ListActionsOnFile(string file_choice, ConfigData config)
 {
+    List<string> matchValues = new List<string>();
     while (true)
     {
         string[] actions = new string[] {
@@ -65,128 +66,158 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
                 "Replace",
                 "Back"
         };
-
+        if (matchValues.Count > 0)
+        {
+            actions = new[] { "dump matches" }.Concat(actions).ToArray();
+        }
         var action = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
                 .Title($"What would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
                 .HighlightStyle($"{config.colors.highlightB}")
                 .AddChoices(actions));
 
-        if (action == actions[0])
+        if (action == "dump matches")
+        {
+            try
+            {
+                using (StreamWriter writer = new StreamWriter("out.txt", false))
+                {
+                    writer.WriteLine(string.Join("\n", matchValues));
+
+                }
+                Logger.LogSuccess("Dumped matches to out.txt");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error writing to out.txt: " + ex.Message);
+            }
+
+        }
+        else if (action == "View contents")
         {
             ViewContents(file_choice);
         }
-        else if (action == actions[1])
+        else if (action == "List")
         {
-            ListOptions(file_choice, config);
+            matchValues = ListOptions(file_choice, config);
         }
-        else if (action == actions[2])
+        else if (action == "Replace")
         {
             ListOptions(file_choice, config, true);
         }
-        else if (action == actions[3])
+        else if (action == "Back")
         {
             return true;
         }
-    }
-}
 
-static void ViewContents(string file_choice)
-{
-    Stopwatch sw = new Stopwatch();
-    sw.Start();
-    var contents = File.ReadAllText(file_choice);
-    AnsiConsole.WriteLine($"{contents}");
-    AnsiConsole.WriteLine("Took " + sw.ElapsedMilliseconds.ToString() + " ms");
-}
+        static void ViewContents(string file_choice)
+        {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            var contents = File.ReadAllText(file_choice);
+            AnsiConsole.WriteLine($"{contents}");
+            AnsiConsole.WriteLine("Took " + sw.ElapsedMilliseconds.ToString() + " ms");
+        }
 
-static bool ListOptions(string file_choice, ConfigData config, bool replace = false)
-{
-    string[] actions = new string[] {
-            "Premade 1",
+        static List<string> ListOptions(string file_choice, ConfigData config, bool replace = false)
+        {
+
+            string[] actions = new string[] {
+            "text in html tags",
             "Premade 2",
             "Custom regex",
             "Back"
-    };
-    var action = AnsiConsole.Prompt(
-        new SelectionPrompt<string>()
-            .Title($"What would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
-            .HighlightStyle($"{config.colors.highlightB}")
-            .AddChoices(actions));
+            };
+            var action = AnsiConsole.Prompt(
+                new SelectionPrompt<string>()
+                    .Title($"What would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
+                    .HighlightStyle($"{config.colors.highlightB}")
+                    .AddChoices(actions));
 
-    string pattern = "";
-    if (action == actions[0])
-    {
-        pattern = "premade pattern";
-    }
-    else if (action == actions[1])
-    {
-        pattern = "premade pattern 2";
-    }
-    else if (action == actions[^2])
-    {
-        pattern = AnsiConsole.Ask<string>($"Give me [{config.colors.highlightB}]regex pattern[/] to match");
-    }
-    else if (action == actions[^1])
-    {
-        return true;
-    }
+            string pattern = "";
+            if (action == actions[0])
+            {
+                pattern = "(?<=>)[^<>\n]+(?=<)";
+            }
+            else if (action == actions[1])
+            {
+                pattern = "premade pattern 2";
+            }
+            else if (action == actions[^2])
+            {
+                pattern = AnsiConsole.Ask<string>($"Give me [{config.colors.highlightB}]regex pattern[/] to match");
+            }
+            else if (action == actions[^1])
+            {
+                return null;
+            }
 
-    Stopwatch sw = new Stopwatch();
+            Stopwatch sw = new Stopwatch();
+            List<string> matches = new List<string>();
 
-    if (replace)
-    {
-        string replacement = AnsiConsole.Ask<string>($"Give me the [{config.colors.highlightB}]replacement[/]");
-        sw.Start();
-        ReplaceTextByPattern(file_choice, pattern, replacement, config);
-    }
-    else
-    {
-        sw.Start();
-        ListLinesByPattern(file_choice, pattern, config);
-    }
-    AnsiConsole.WriteLine();
-    AnsiConsole.MarkupLine($"Took [yellow]{sw.ElapsedMilliseconds.ToString()}[/] ms");
-    return false;
-}
+            if (replace)
+            {
+                string replacement = AnsiConsole.Ask<string>($"Give me the [{config.colors.highlightB}]replacement[/]");
+                sw.Start();
+                ReplaceTextByPattern(file_choice, pattern, replacement, config);
+            }
+            else
+            {
+                sw.Start();
+                matches = ListLinesByPattern(file_choice, pattern, config);
+                return matches;
+            }
 
-static void ListLinesByPattern(string file_choice, string pattern, ConfigData config)
-{
-    var contents = File.ReadAllText(file_choice);
-    RegexOptions options = RegexOptions.Multiline;
-    int matchCount = 0;
-    var lines = File.ReadAllLines(file_choice);
-    for (int i = 0; i < lines.Length; i++)
-    {
-        var line = lines[i];
-        var matches = Regex.Matches(line, pattern, options);
-        if (matches.Count > 0)
+            AnsiConsole.WriteLine();
+            AnsiConsole.MarkupLine($"Took [yellow]{sw.ElapsedMilliseconds.ToString()}[/] ms");
+            return matches;
+        }
+
+        static List<string> ListLinesByPattern(string file_choice, string pattern, ConfigData config)
         {
-            matchCount += matches.Count;
+            List<string> matchValues = new List<string>();
+            var contents = File.ReadAllText(file_choice);
+            RegexOptions options = RegexOptions.Multiline;
+            int matchCount = 0;
+            var lines = File.ReadAllLines(file_choice);
 
-            line = line.Replace("[", "[[").Replace("]", "]]");
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                var matches = Regex.Matches(line, pattern, options);
+                if (matches.Count > 0)
+                {
+                    matchCount += matches.Count;
 
-            var highlightedLine = Regex.Replace(line, pattern, match => $"[{config.colors.highlightC}]{match.Value}[/]", options);
+                    line = line.Replace("[", "[[").Replace("]", "]]");
 
-            AnsiConsole.Markup($"[{config.colors.highlightB}]Line {i + 1}[/]: {highlightedLine} \n");
+                    var highlightedLine = Regex.Replace(line, pattern, match =>
+                        {
+                            matchValues.Add(match.Value);
+                            return $"[{config.colors.highlightC}]{match.Value}[/]";
+                        }, options);
+
+                    AnsiConsole.Markup($"[{config.colors.highlightB}]Line {i + 1}[/]: {highlightedLine} \n");
+                }
+            }
+
+            AnsiConsole.Markup($"[{config.colors.highlightC}]Found {matchCount} matches[/]\n");
+            return matchValues;
+        }
+
+        static void ReplaceTextByPattern(string file_choice, string pattern, string replacement, ConfigData config)
+        {
+            var contents = File.ReadAllText(file_choice);
+            int replacementCount = 0;
+            var newContents = Regex.Replace(contents, pattern, match =>
+            {
+                replacementCount++;
+                return replacement;
+            });
+
+            AnsiConsole.MarkupLine($"[{config.colors.highlightC}]{replacementCount} replacement{(replacementCount != 1 ? "s" : "")} made[/] in [{config.colors.highlightA}]{file_choice}[/]");
+
+            File.WriteAllText(file_choice, newContents);
         }
     }
-
-    AnsiConsole.Markup($"[{config.colors.highlightC}]Found {matchCount} matches[/]\n");
 }
-
-static void ReplaceTextByPattern(string file_choice, string pattern, string replacement, ConfigData config)
-{
-    var contents = File.ReadAllText(file_choice);
-    int replacementCount = 0;
-    var newContents = Regex.Replace(contents, pattern, match =>
-    {
-        replacementCount++;
-        return replacement;
-    });
-
-    AnsiConsole.MarkupLine($"[{config.colors.highlightC}]{replacementCount} replacement{(replacementCount != 1 ? "s" : "")} made[/] in [{config.colors.highlightA}]{file_choice}[/]");
-
-    File.WriteAllText(file_choice, newContents);
-}
-
