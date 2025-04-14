@@ -1,12 +1,31 @@
+using System.Reflection;
 using System.Text;
 using Spectre.Console;
 using Tomlyn;
 
 public static class Config
 {
+    public static string defaultData = "[colors]" +
+                                       "\n" +
+                                       "highlight_a = \"blue\"" +
+                                       "\n" +
+                                       "highlight_b = \"green\"" +
+                                       "\n" +
+                                       "highlight_c = \"red\"" +
+                                       "\n" +
+                                       "[custom_regex]" +
+                                       "\n" +
+                                       "custom1 = \"d.\"" +
+                                       "\n" +
+                                       "custom2 = \"d*\"" +
+                                       "\n" +
+                                       "custom3 = \"d+\"" +
+                                       "\n";
+
     public static ConfigData Load()
     {
-        var path_directory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "/czu_projekt/");
+        var path_directory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "/czu_projekt/");
         var path_file = Path.Join(path_directory, "config.toml");
 
         if (File.Exists(path_file))
@@ -16,24 +35,10 @@ public static class Config
 
             return model;
         }
+
+        Logger.LogWarning("Config file not found, creating default config file.");
         FileStream file = File.Create(path_file);
-        string data = "[colors]";
-        data += "\n";
-        data += "highlight_a = \"blue\"";
-        data += "\n";
-        data += "highlight_b = \"green\"";
-        data += "\n";
-        data += "highlight_c = \"red\"";
-        data += "\n";
-        data += "[custom_regex]";
-        data += "\n";
-        data += "custom1 = \"d.\"";
-        data += "\n";
-        data += "custom2 = \"d*\"";
-        data += "\n";
-        data += "custom3 = \"d+\"";
-        data += "\n";
-        file.Write(Encoding.UTF8.GetBytes(data));
+        file.Write(Encoding.UTF8.GetBytes(defaultData));
         file.Close();
 
         return new ConfigData();
@@ -41,33 +46,27 @@ public static class Config
 
     public static void Save(ConfigData config)
     {
-        var pathDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "/czu_projekt/");
+        var pathDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "/czu_projekt/");
         var pathFile = Path.Join(pathDirectory, "config.toml");
 
         if (File.Exists(pathFile))
         {
+            Logger.LogSuccess("Config file found, saving changes.");
             string tomlOut = Toml.FromModel(config);
             File.WriteAllText(pathFile, tomlOut);
         }
         else
         {
+            Logger.LogWarning("Config file not found, creating default config file.");
             SaveDefault(pathFile);
         }
-
     }
 
     public static void SaveDefault(string pathFile)
     {
         FileStream file = File.Create(pathFile);
-        string data = "[colors]";
-        data += "\n";
-        data += "highlight_a = \"red\"";
-        data += "\n";
-        data += "highlight_b = \"blue\"";
-        data += "\n";
-        data += "highlight_c = \"green\"";
-        data += "\n";
-        file.Write(Encoding.UTF8.GetBytes(data));
+        file.Write(Encoding.UTF8.GetBytes(defaultData));
         file.Close();
     }
 
@@ -76,11 +75,12 @@ public static class Config
     {
         while (true)
         {
-            string[] settings = new string[] {
-                  "Colors",
-                  "Custom regex",
-                  "Exit"
-                };
+            string[] settings = new string[]
+            {
+                "Colors",
+                "Custom regex",
+                "Exit"
+            };
 
             var setting = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
@@ -92,6 +92,7 @@ public static class Config
             {
                 ListColors(config);
             }
+
             if (setting == settings[1])
             {
                 ListCustomRegex(config);
@@ -107,49 +108,66 @@ public static class Config
     {
         while (true)
         {
-            string[] settings = new string[] {
-                  "Highlight A - " + config.colors.highlightA,
-                  "Highlight B - " + config.colors.highlightB,
-                  "Highlight C - " + config.colors.highlightC,
-                  "Exit"
-                };
+            string[] settings = new string[]
+            {
+                "Highlight A - " + config.colors.highlightA,
+                "Highlight B - " + config.colors.highlightB,
+                "Highlight C - " + config.colors.highlightC,
+                "Exit"
+            };
+            try
+            {
+                var setting = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title($"[{config.colors.highlightA}]Choose settings[/]")
+                        .HighlightStyle($"{config.colors.highlightB}")
+                        .AddChoices(settings));
 
-            var setting = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title($"[{config.colors.highlightA}]Choose settings[/]")
-                    .HighlightStyle($"{config.colors.highlightB}")
-                    .AddChoices(settings));
+                string color = AnsiConsole.Ask<string>("Enter color: ");
+                if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
+                        string.Equals(prop.Name, color, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Logger.LogError("Invalid color format.");
+                    return true;
+                }
 
-            if (setting == settings[0])
-            {
-                config.colors.highlightA = AnsiConsole.Ask<string>("Enter color: ");
+                if (setting == settings[0])
+                {
+                    config.colors.highlightA = color;
+                }
+                else if (setting == settings[1])
+                {
+                    config.colors.highlightB = color;
+                }
+                else if (setting == settings[2])
+                {
+                    config.colors.highlightC = color;
+                }
+                else if (setting == settings[^1])
+                {
+                    Save(config);
+                    return true;
+                }
             }
-            else if (setting == settings[1])
+            catch (Exception ex)
             {
-                config.colors.highlightB = AnsiConsole.Ask<string>("Enter color: ");
-            }
-            else if (setting == settings[2])
-            {
-                config.colors.highlightC = AnsiConsole.Ask<string>("Enter color: ");
-            }
-            else if (setting == settings[^1])
-            {
-                Save(config);
                 return true;
+                Logger.LogError("Invalid color format.");
             }
         }
-
     }
+
     public static bool ListCustomRegex(ConfigData config)
     {
         while (true)
         {
-            string[] settings = new string[] {
-                  "Custom 1 - " + config.custom_regex.custom_1,
-                  "Custom 2 - " + config.custom_regex.custom_2,
-                  "Custom 3 - " + config.custom_regex.custom_3,
-                  "Exit"
-                };
+            string[] settings = new string[]
+            {
+                "Custom 1 - " + config.custom_regex.custom_1,
+                "Custom 2 - " + config.custom_regex.custom_2,
+                "Custom 3 - " + config.custom_regex.custom_3,
+                "Exit"
+            };
 
             var setting = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
@@ -163,11 +181,12 @@ public static class Config
             }
             else if (setting == settings[1])
             {
-                config.custom_regex.custom_1 = AnsiConsole.Ask<string>("Enter regex: ");
+                config.custom_regex.custom_2 = AnsiConsole.Ask<string>("Enter regex: ");
             }
+
             else if (setting == settings[2])
             {
-                config.colors.highlightB = AnsiConsole.Ask<string>("Enter regex: ");
+                config.custom_regex.custom_3 = AnsiConsole.Ask<string>("Enter regex: ");
             }
             else if (setting == settings[^1])
             {
@@ -175,7 +194,5 @@ public static class Config
                 return true;
             }
         }
-
     }
-
 }

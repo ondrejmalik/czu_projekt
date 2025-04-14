@@ -123,11 +123,11 @@ static bool ListOptions(string file_choice, ConfigData config, bool replace = fa
     {
         pattern = "premade pattern 2";
     }
-    else if (action == actions[2])
+    else if (action == actions[^2])
     {
         pattern = AnsiConsole.Ask<string>($"Give me [{config.colors.highlightB}]regex pattern[/] to match");
     }
-    else if (action == actions[3])
+    else if (action == actions[^1])
     {
         return true;
     }

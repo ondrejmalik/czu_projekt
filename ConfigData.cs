@@ -1,20 +1,19 @@
 public class ConfigData
 {
-    public required Colors colors { get; set; }
-
-    public required CustomRegex custom_regex { get; set; }
+    public Colors colors { get; set; } = new Colors();
+    public CustomRegex custom_regex { get; set; } = new CustomRegex();
 
     public class Colors
     {
-        public required string highlightA { get; set; }
-        public required string highlightB { get; set; }
-        public required string highlightC { get; set; }
+        public string highlightA { get; set; } = string.Empty;
+        public string highlightB { get; set; } = string.Empty;
+        public string highlightC { get; set; } = string.Empty;
     }
 
     public class CustomRegex
     {
-        public required string custom_1 { get; set; }
-        public required string custom_2 { get; set; }
-        public required string custom_3 { get; set; }
+        public string custom_1 { get; set; } = string.Empty;
+        public string custom_2 { get; set; } = string.Empty;
+        public string custom_3 { get; set; } = string.Empty;
     }
 }
