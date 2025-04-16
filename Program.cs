@@ -7,7 +7,6 @@ ListFilesInDirectory(".");
 
 static void ListFilesInDirectory(string directory_choice)
 {
-    // COnfigure
     ConfigData config = Config.Load();
     while (true)
     {
@@ -20,7 +19,6 @@ static void ListFilesInDirectory(string directory_choice)
             "Config",
             "----------------",
         };
-        // combine the two arrays
         string[] choices = config_section.Concat(files).Append("Exit").ToArray();
 
         var file_choice = AnsiConsole.Prompt(
@@ -32,7 +30,6 @@ static void ListFilesInDirectory(string directory_choice)
 
         if (file_choice == choices[0])
         {
-            // Config
             Config.List(config);
             continue;
         }
@@ -43,7 +40,6 @@ static void ListFilesInDirectory(string directory_choice)
         }
         else if (file_choice == choices[^1])
         {
-            // Exit
             return;
         }
 
@@ -84,7 +80,7 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             {
                 using (StreamWriter writer = new StreamWriter("out.txt", false))
                 {
-                    writer.WriteLine(string.Join("\n", matchValues));
+                    writer.WriteLine(string.Join("\n", matchValues!));
 
                 }
                 Logger.LogSuccess("Dumped matches to out.txt");
@@ -147,11 +143,11 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             string pattern = "";
             if (action == actions[0])
             {
-                pattern = "(?<=>)[^<>\n]+(?=<)";
+                pattern = @"(?<=>)[^<>\n]+(?=<)";
             }
             else if (action == actions[1])
             {
-                pattern = "premade pattern 2";
+                pattern = @"(?<= *)((((public)|(static)|(private)|(protected)|(override)|(virtual)|(extern)) )+(\w{1}\S*)(\w{1}\S*) \w{1}\S*\(.*\))";
             }
             if (action == actions[2])
             {
@@ -172,7 +168,7 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             }
             else if (action == actions[^1])
             {
-                return null;
+                return null!;
             }
 
             Stopwatch sw = new Stopwatch();

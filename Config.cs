@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text;
 using Spectre.Console;
 using Tomlyn;
-
 public static class Config
 {
     public static string defaultData = "[colors]" +
@@ -152,10 +151,11 @@ public static class Config
                 }
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return true;
+
                 Logger.LogError("Invalid color format.");
+                return true;
             }
         }
     }
