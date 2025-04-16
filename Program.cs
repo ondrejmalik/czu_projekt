@@ -122,7 +122,7 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             string path = $"> {file_choice}> Actions > {(replace ? "Replace" : "List")}";
             string[] premadeActions = new string[] {
             "text in html tags",
-            "Premade 2",
+            "function signature",
 
             };
             string[] customActions = new string[] {
@@ -147,7 +147,7 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             }
             else if (action == actions[1])
             {
-                pattern = @"(?<= *)((((public)|(static)|(private)|(protected)|(override)|(virtual)|(extern)) )+(\w{1}\S*)(\w{1}\S*) \w{1}\S*\(.*\))";
+                pattern = @"(?<= *)((((public)|(static)|(private)|(protected)|(override)|(virtual)|(extern)|(internal)) )+(\w{1}\S*)(\w{1}\S*) \w{1}\S*\(.*\))";
             }
             if (action == actions[2])
             {
