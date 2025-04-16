@@ -75,6 +75,7 @@ public static class Config
     {
         while (true)
         {
+            string path = $"> File > Config";
             string[] settings = new string[]
             {
                 "Colors",
@@ -84,7 +85,7 @@ public static class Config
 
             var setting = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title($"[{config.colors.highlightA}]Choose settings[/]")
+                    .Title($"{path}\n\n[{config.colors.highlightA}]Choose settings[/]")
                     .HighlightStyle($"{config.colors.highlightB}")
                     .AddChoices(settings));
 
@@ -108,6 +109,7 @@ public static class Config
     {
         while (true)
         {
+            string path = $"> File > Config > Colors";
             string[] settings = new string[]
             {
                 "Highlight A - " + config.colors.highlightA,
@@ -119,10 +121,15 @@ public static class Config
             {
                 var setting = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .Title($"[{config.colors.highlightA}]Choose settings[/]")
+                        .Title($"{path}\n\n[{config.colors.highlightA}]Choose settings[/]")
                         .HighlightStyle($"{config.colors.highlightB}")
                         .AddChoices(settings));
 
+                if (setting == settings[^1])
+                {
+                    Save(config);
+                    return true;
+                }
                 string color = AnsiConsole.Ask<string>("Enter color: ");
                 if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
                         string.Equals(prop.Name, color, StringComparison.OrdinalIgnoreCase)))
@@ -143,11 +150,7 @@ public static class Config
                 {
                     config.colors.highlightC = color;
                 }
-                else if (setting == settings[^1])
-                {
-                    Save(config);
-                    return true;
-                }
+
             }
             catch (Exception ex)
             {
@@ -161,6 +164,7 @@ public static class Config
     {
         while (true)
         {
+            string path = $"> File > Config > Custom regex";
             string[] settings = new string[]
             {
                 "Custom 1 - " + config.custom_regex.custom_1,
@@ -171,7 +175,7 @@ public static class Config
 
             var setting = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title($"[{config.colors.highlightA}]Choose settings[/]")
+                    .Title($"{path}\n\n[{config.colors.highlightA}]Choose settings[/]")
                     .HighlightStyle($"{config.colors.highlightB}")
                     .AddChoices(settings));
 

@@ -25,7 +25,7 @@ static void ListFilesInDirectory(string directory_choice)
 
         var file_choice = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
-                .Title($"[{config.colors.highlightA}]Choose a file[/]")
+                .Title($"> File\n\n[{config.colors.highlightA}]Choose a file[/]")
                 .PageSize(10)
                 .HighlightStyle($"{config.colors.highlightB}")
                 .AddChoices(choices));
@@ -48,7 +48,7 @@ static void ListFilesInDirectory(string directory_choice)
         }
 
 
-        AnsiConsole.MarkupLine($"[{config.colors.highlightB}]Selected file: {file_choice}[/]");
+        //AnsiConsole.MarkupLine($"[{config.colors.highlightB}]Selected file: {file_choice}[/]");
         ListActionsOnFile(file_choice, config);
 
         AnsiConsole.WriteLine();
@@ -60,19 +60,21 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
     List<string> matchValues = new List<string>();
     while (true)
     {
+        string path = $"> {file_choice} > Actions";
+
         string[] actions = new string[] {
                 "View contents",
                 "List",
                 "Replace",
                 "Back"
         };
-        if (matchValues.Count > 0)
+        if (matchValues != null)
         {
             actions = new[] { "dump matches" }.Concat(actions).ToArray();
         }
         var action = AnsiConsole.Prompt(
             new SelectionPrompt<string>()
-                .Title($"What would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
+                .Title($"{path}\n\nWhat would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
                 .HighlightStyle($"{config.colors.highlightB}")
                 .AddChoices(actions));
 
@@ -121,16 +123,24 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
 
         static List<string> ListOptions(string file_choice, ConfigData config, bool replace = false)
         {
-
-            string[] actions = new string[] {
+            string path = $"> {file_choice}> Actions > {(replace ? "Replace" : "List")}";
+            string[] premadeActions = new string[] {
             "text in html tags",
             "Premade 2",
-            "Custom regex",
-            "Back"
+
             };
+            string[] customActions = new string[] {
+                "Custom regex 1",
+                "Custom regex 2",
+                "Custom regex 3",
+                "Regex pattern",
+                "Back"
+            };
+            string[] actions = premadeActions.Concat(customActions).ToArray();
+
             var action = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title($"What would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
+                    .Title($"{path}\n\nWhat would you like to do with [{config.colors.highlightA}]{file_choice}[/]?")
                     .HighlightStyle($"{config.colors.highlightB}")
                     .AddChoices(actions));
 
@@ -143,6 +153,19 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             {
                 pattern = "premade pattern 2";
             }
+            if (action == actions[2])
+            {
+                pattern = config.custom_regex.custom_1;
+            }
+            else if (action == actions[3])
+            {
+                pattern = config.custom_regex.custom_2;
+            }
+            if (action == actions[4])
+            {
+                pattern = config.custom_regex.custom_3;
+            }
+
             else if (action == actions[^2])
             {
                 pattern = AnsiConsole.Ask<string>($"Give me [{config.colors.highlightB}]regex pattern[/] to match");
@@ -165,7 +188,6 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
             {
                 sw.Start();
                 matches = ListLinesByPattern(file_choice, pattern, config);
-                return matches;
             }
 
             AnsiConsole.WriteLine();
