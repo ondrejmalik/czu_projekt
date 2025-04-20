@@ -23,50 +23,82 @@ public static class Config
 
     public static ConfigData Load()
     {
+
         var path_directory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "/czu_projekt/");
         var path_file = Path.Join(path_directory, "config.toml");
-
-        if (File.Exists(path_file))
+        try
         {
-            string file_data = File.ReadAllText(path_file);
-            var model = Toml.ToModel<ConfigData>(file_data);
+            if (File.Exists(path_file))
+            {
+                string file_data = File.ReadAllText(path_file);
+                var model = Toml.ToModel<ConfigData>(file_data);
 
-            return model;
+                return model;
+            }
+
+            return DefaultConfig(path_file);
         }
-
-        Logger.LogWarning("Config file not found, creating default config file.");
-        FileStream file = File.Create(path_file);
-        file.Write(Encoding.UTF8.GetBytes(defaultData));
-        file.Close();
-
-        return new ConfigData();
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error loading config file {ex.Message}");
+            DefaultConfig(path_file);
+            return new ConfigData();
+        }
     }
-
-    public static void Save(ConfigData config)
+    public static ConfigData DefaultConfig(string path_file)
     {
-        var pathDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "/czu_projekt/");
-        var pathFile = Path.Join(pathDirectory, "config.toml");
-
-        if (File.Exists(pathFile))
-        {
-            Logger.LogSuccess("Config file found, saving changes.");
-            string tomlOut = Toml.FromModel(config);
-            File.WriteAllText(pathFile, tomlOut);
-        }
-        else
+        try
         {
             Logger.LogWarning("Config file not found, creating default config file.");
-            SaveDefault(pathFile);
+            FileStream file = File.Create(path_file);
+            file.Write(Encoding.UTF8.GetBytes(defaultData));
+            file.Close();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error creating config file {ex.Message}");
+        }
+        return new ConfigData();
+    }
+    public static void Save(ConfigData config)
+    {
+        try
+        {
+            var pathDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "/czu_projekt/");
+            var pathFile = Path.Join(pathDirectory, "config.toml");
+
+            if (File.Exists(pathFile))
+            {
+                Logger.LogSuccess("Config file found, saving changes.");
+                string tomlOut = Toml.FromModel(config);
+                File.WriteAllText(pathFile, tomlOut);
+            }
+            else
+            {
+                Logger.LogWarning("Config file not found, creating default config file.");
+                SaveDefault(pathFile);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error saving config file {ex.Message}");
         }
     }
 
     public static void SaveDefault(string pathFile)
     {
-        FileStream file = File.Create(pathFile);
-        file.Write(Encoding.UTF8.GetBytes(defaultData));
-        file.Close();
+        try
+        {
+            FileStream file = File.Create(pathFile);
+            file.Write(Encoding.UTF8.GetBytes(defaultData));
+            file.Close();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error creating config file{ex.Message}");
+        }
     }
 
 

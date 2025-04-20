@@ -112,9 +112,19 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            var contents = File.ReadAllText(file_choice);
-            AnsiConsole.WriteLine($"{contents}");
-            AnsiConsole.WriteLine("Took " + sw.ElapsedMilliseconds.ToString() + " ms");
+            try
+            {
+                var contents = File.ReadAllText(file_choice);
+
+                AnsiConsole.WriteLine($"{contents}");
+                AnsiConsole.WriteLine("Took " + sw.ElapsedMilliseconds.ToString() + " ms");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error reading file: " + ex.Message);
+                return;
+            }
+
         }
 
         static List<string> ListOptions(string file_choice, ConfigData config, bool replace = false)
@@ -173,69 +183,92 @@ static bool ListActionsOnFile(string file_choice, ConfigData config)
 
             Stopwatch sw = new Stopwatch();
             List<string> matches = new List<string>();
-
-            if (replace)
+            try
             {
-                string replacement = AnsiConsole.Ask<string>($"Give me the [{config.colors.highlightB}]replacement[/]");
-                sw.Start();
-                ReplaceTextByPattern(file_choice, pattern, replacement, config);
-            }
-            else
-            {
-                sw.Start();
-                matches = ListLinesByPattern(file_choice, pattern, config);
-            }
-
-            AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine($"Took [yellow]{sw.ElapsedMilliseconds.ToString()}[/] ms");
-            return matches;
-        }
-
-        static List<string> ListLinesByPattern(string file_choice, string pattern, ConfigData config)
-        {
-            List<string> matchValues = new List<string>();
-            var contents = File.ReadAllText(file_choice);
-            RegexOptions options = RegexOptions.Multiline;
-            int matchCount = 0;
-            var lines = File.ReadAllLines(file_choice);
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var line = lines[i];
-                var matches = Regex.Matches(line, pattern, options);
-                if (matches.Count > 0)
+                if (replace)
                 {
-                    matchCount += matches.Count;
-
-                    line = line.Replace("[", "[[").Replace("]", "]]");
-
-                    var highlightedLine = Regex.Replace(line, pattern, match =>
-                        {
-                            matchValues.Add(match.Value);
-                            return $"[{config.colors.highlightC}]{match.Value}[/]";
-                        }, options);
-
-                    AnsiConsole.Markup($"[{config.colors.highlightB}]Line {i + 1}[/]: {highlightedLine} \n");
+                    string replacement = AnsiConsole.Ask<string>($"Give me the [{config.colors.highlightB}]replacement[/]");
+                    sw.Start();
+                    ReplaceTextByPattern(file_choice, pattern, replacement, config);
                 }
+                else
+                {
+                    sw.Start();
+                    matches = ListLinesByPattern(file_choice, pattern, config);
+                }
+
+                AnsiConsole.WriteLine();
+                AnsiConsole.MarkupLine($"Took [yellow]{sw.ElapsedMilliseconds.ToString()}[/] ms");
+                return matches;
+            }
+            catch (RegexMatchTimeoutException ex)
+            {
+                Logger.LogError("Regex match timeout: " + ex.Message);
+                return null!;
+            }
+            catch (FileNotFoundException ex)
+            {
+                Logger.LogError("File not found: " + ex.Message);
+                return null!;
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                Logger.LogError("Directory not found: " + ex.Message);
+                return null!;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Error: " + ex.Message);
+                return null!;
             }
 
-            AnsiConsole.Markup($"[{config.colors.highlightC}]Found {matchCount} matches[/]\n");
-            return matchValues;
-        }
-
-        static void ReplaceTextByPattern(string file_choice, string pattern, string replacement, ConfigData config)
-        {
-            var contents = File.ReadAllText(file_choice);
-            int replacementCount = 0;
-            var newContents = Regex.Replace(contents, pattern, match =>
+            static List<string> ListLinesByPattern(string file_choice, string pattern, ConfigData config)
             {
-                replacementCount++;
-                return replacement;
-            });
+                List<string> matchValues = new List<string>();
+                var contents = File.ReadAllText(file_choice);
+                RegexOptions options = RegexOptions.Multiline;
+                int matchCount = 0;
+                var lines = File.ReadAllLines(file_choice);
 
-            AnsiConsole.MarkupLine($"[{config.colors.highlightC}]{replacementCount} replacement{(replacementCount != 1 ? "s" : "")} made[/] in [{config.colors.highlightA}]{file_choice}[/]");
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    var line = lines[i];
+                    var matches = Regex.Matches(line, pattern, options);
+                    if (matches.Count > 0)
+                    {
+                        matchCount += matches.Count;
 
-            File.WriteAllText(file_choice, newContents);
+                        line = line.Replace("[", "[[").Replace("]", "]]");
+
+                        var highlightedLine = Regex.Replace(line, pattern, match =>
+                            {
+                                matchValues.Add(match.Value);
+                                return $"[{config.colors.highlightC}]{match.Value}[/]";
+                            }, options);
+
+                        AnsiConsole.Markup($"[{config.colors.highlightB}]Line {i + 1}[/]: {highlightedLine} \n");
+                    }
+                }
+
+                AnsiConsole.Markup($"[{config.colors.highlightC}]Found {matchCount} matches[/]\n");
+                return matchValues;
+
+            }
+
+            static void ReplaceTextByPattern(string file_choice, string pattern, string replacement, ConfigData config)
+            {
+                var contents = File.ReadAllText(file_choice);
+                int replacementCount = 0;
+                var newContents = Regex.Replace(contents, pattern, match =>
+                {
+                    replacementCount++;
+                    return replacement;
+                });
+
+                AnsiConsole.MarkupLine($"[{config.colors.highlightC}]{replacementCount} replacement{(replacementCount != 1 ? "s" : "")} made[/] in [{config.colors.highlightA}]{file_choice}[/]");
+
+                File.WriteAllText(file_choice, newContents);
+            }
         }
     }
 }
