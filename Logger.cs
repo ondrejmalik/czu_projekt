@@ -1,10 +1,15 @@
 using Spectre.Console;
 
+namespace CzuProjekt;
+
 public static class Logger
 {
-    static string logFileName = "log.txt";
-    static string logFolderName = "czu_projekt";
-    static string logFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), logFolderName);
+    private const string LogFileName = "log.txt";
+    private const string LogFolderName = "CzuProjekt";
+
+    private static readonly string LogFilePath =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), LogFolderName);
+
     public static void LogError(string message)
     {
         AnsiConsole.MarkupLine($"[red]{message}[/]");
@@ -27,11 +32,12 @@ public static class Logger
     {
         try
         {
-            if (!Directory.Exists(logFilePath))
+            if (!Directory.Exists(LogFilePath))
             {
-                Directory.CreateDirectory(logFilePath);
+                Directory.CreateDirectory(LogFilePath);
             }
-            string logFullPath = Path.Combine(logFilePath, logFileName);
+
+            string logFullPath = Path.Combine(LogFilePath, LogFileName);
 
             // Write to log file - this will create it if doesn't exist
             using (StreamWriter writer = File.AppendText(logFullPath))

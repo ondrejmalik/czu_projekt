@@ -2,72 +2,83 @@ using System.Reflection;
 using System.Text;
 using Spectre.Console;
 using Tomlyn;
+
+namespace CzuProjekt;
+
+/// <summary>
+/// Provides functionality for loading, saving, and editing a configuration file (TOML) for the application.
+/// </summary>
 public static class Config
 {
-    public static string defaultData = "[colors]" +
-                                       "\n" +
-                                       "highlight_a = \"blue\"" +
-                                       "\n" +
-                                       "highlight_b = \"green\"" +
-                                       "\n" +
-                                       "highlight_c = \"red\"" +
-                                       "\n" +
-                                       "[custom_regex]" +
-                                       "\n" +
-                                       "custom1 = \"d.\"" +
-                                       "\n" +
-                                       "custom2 = \"d*\"" +
-                                       "\n" +
-                                       "custom3 = \"d+\"" +
+    private const string DefaultData = "[colors]" + "\n" + "highlight_a = \"blue\"" + "\n" + "highlight_b = \"green\"" +
+                                       "\n" + "highlight_c = \"red\"" + "\n" + "[custom_regex]" + "\n" +
+                                       "custom1 = \"d.\"" + "\n" + "custom2 = \"d*\"" + "\n" + "custom3 = \"d+\"" +
                                        "\n";
 
+    const string ConfigFileName = "config.toml";
+
+    private static readonly string PathDirectory = Path.Join(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "/CzuProjekt/");
+
+    /// <summary>
+    /// Loads the configuration from a TOML file. If the file doesn't exist, creates and returns a default configuration.
+    /// </summary>
+    /// <returns>The loaded or default <see cref="ConfigData"/> instance.</returns>
     public static ConfigData Load()
     {
-
-        var path_directory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "/czu_projekt/");
-        var path_file = Path.Join(path_directory, "config.toml");
+        var pathFile = Path.Join(PathDirectory, ConfigFileName);
         try
         {
-            if (File.Exists(path_file))
+            if (File.Exists(pathFile))
             {
-                string file_data = File.ReadAllText(path_file);
-                var model = Toml.ToModel<ConfigData>(file_data);
+                string fileData = File.ReadAllText(pathFile);
+                var model = Toml.ToModel<ConfigData>(fileData);
 
                 return model;
             }
 
-            return DefaultConfig(path_file);
+            return DefaultConfig();
         }
         catch (Exception ex)
         {
             Logger.LogError($"Error loading config file {ex.Message}");
-            DefaultConfig(path_file);
+            DefaultConfig();
             return new ConfigData();
         }
     }
-    public static ConfigData DefaultConfig(string path_file)
+
+    /// <summary>
+    /// Creates a default configuration file with predefined data and returns a new config object.
+    /// </summary>
+    /// <returns>A new default <see cref="ConfigData"/> object.</returns>
+    public static ConfigData DefaultConfig()
     {
         try
         {
             Logger.LogWarning("Config file not found, creating default config file.");
-            FileStream file = File.Create(path_file);
-            file.Write(Encoding.UTF8.GetBytes(defaultData));
+            FileStream file = File.Create(PathDirectory);
+            file.Write(Encoding.UTF8.GetBytes(DefaultData));
             file.Close();
+            return Toml.ToModel<ConfigData>(DefaultData);
         }
         catch (Exception ex)
         {
             Logger.LogError($"Error creating config file {ex.Message}");
         }
+
         return new ConfigData();
     }
-    public static void Save(ConfigData config)
+
+    /// <summary>
+    /// Saves the current configuration to a TOML file. If the file doesn't exist, creates a default file first.
+    /// </summary>
+    /// <param name="config">The configuration to save.</param>
+    private static void Save(ConfigData config)
     {
         try
         {
-            var pathDirectory = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "/czu_projekt/");
-            var pathFile = Path.Join(pathDirectory, "config.toml");
+            var pathFile = Path.Join(PathDirectory, ConfigFileName);
 
             if (File.Exists(pathFile))
             {
@@ -87,12 +98,16 @@ public static class Config
         }
     }
 
-    public static void SaveDefault(string pathFile)
+    /// <summary>
+    /// Creates a new config file with default settings.
+    /// </summary>
+    /// <param name="pathFile">The file path where the default config will be written.</param>
+    private static void SaveDefault(string pathFile)
     {
         try
         {
             FileStream file = File.Create(pathFile);
-            file.Write(Encoding.UTF8.GetBytes(defaultData));
+            file.Write(Encoding.UTF8.GetBytes(DefaultData));
             file.Close();
         }
         catch (Exception ex)
@@ -101,23 +116,26 @@ public static class Config
         }
     }
 
-
-    public static bool List(ConfigData config)
+    /// <summary>
+    /// Displays a menu to allow users to choose between editing colors, custom regex settings, or exiting.
+    /// </summary>
+    /// <param name="config">The configuration to display and potentially modify.</param>
+    public static void List(ConfigData config)
     {
         while (true)
         {
             string path = $"> File > Config";
-            string[] settings = new string[]
-            {
+            string[] settings =
+            [
                 "Colors",
                 "Custom regex",
                 "Exit"
-            };
+            ];
 
             var setting = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title($"{path}\n\n[{config.colors.highlightA}]Choose settings[/]")
-                    .HighlightStyle($"{config.colors.highlightB}")
+                    .Title($"{path}\n\n[{config.Colors.HighlightA}]Choose settings[/]")
+                    .HighlightStyle($"{config.Colors.HighlightB}")
                     .AddChoices(settings));
 
             if (setting == settings[0])
@@ -131,103 +149,110 @@ public static class Config
             }
             else if (setting == settings[^1])
             {
-                return true;
+                return;
             }
         }
     }
 
-    public static bool ListColors(ConfigData config)
+    /// <summary>
+    /// Allows the user to view and change the highlight color settings interactively.
+    /// </summary>
+    /// <param name="config">The configuration containing color values.</param>
+    private static void ListColors(ConfigData config)
     {
         while (true)
         {
             string path = $"> File > Config > Colors";
-            string[] settings = new string[]
-            {
-                "Highlight A - " + config.colors.highlightA,
-                "Highlight B - " + config.colors.highlightB,
-                "Highlight C - " + config.colors.highlightC,
+            string[] settings =
+            [
+                "Highlight A - " + config.Colors.HighlightA,
+                "Highlight B - " + config.Colors.HighlightB,
+                "Highlight C - " + config.Colors.HighlightC,
                 "Exit"
-            };
+            ];
             try
             {
                 var setting = AnsiConsole.Prompt(
                     new SelectionPrompt<string>()
-                        .Title($"{path}\n\n[{config.colors.highlightA}]Choose settings[/]")
-                        .HighlightStyle($"{config.colors.highlightB}")
+                        .Title($"{path}\n\n[{config.Colors.HighlightA}]Choose settings[/]")
+                        .HighlightStyle($"{config.Colors.HighlightB}")
                         .AddChoices(settings));
 
                 if (setting == settings[^1])
                 {
                     Save(config);
-                    return true;
+                    return;
                 }
+
                 string color = AnsiConsole.Ask<string>("Enter color: ");
                 if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
                         string.Equals(prop.Name, color, StringComparison.OrdinalIgnoreCase)))
                 {
-                    Logger.LogError("Invalid color format.");
-                    return true;
+                    Logger.LogError("Invalid color.");
+                    return;
                 }
 
                 if (setting == settings[0])
                 {
-                    config.colors.highlightA = color;
+                    config.Colors.HighlightA = color;
                 }
                 else if (setting == settings[1])
                 {
-                    config.colors.highlightB = color;
+                    config.Colors.HighlightB = color;
                 }
                 else if (setting == settings[2])
                 {
-                    config.colors.highlightC = color;
+                    config.Colors.HighlightC = color;
                 }
-
             }
             catch (Exception)
             {
-
-                Logger.LogError("Invalid color format.");
-                return true;
+                Logger.LogError("Invalid color.");
+                return;
             }
         }
     }
 
-    public static bool ListCustomRegex(ConfigData config)
+    /// <summary>
+    /// Allows the user to view and modify custom regular expression patterns in the configuration.
+    /// </summary>
+    /// <param name="config">The configuration containing custom regex values.</param>
+    /// <returns>True when the user exits the regex configuration menu.</returns>
+    private static void ListCustomRegex(ConfigData config)
     {
         while (true)
         {
             string path = $"> File > Config > Custom regex";
-            string[] settings = new string[]
-            {
-                "Custom 1 - " + config.custom_regex.custom_1,
-                "Custom 2 - " + config.custom_regex.custom_2,
-                "Custom 3 - " + config.custom_regex.custom_3,
+            string[] settings =
+            [
+                "Custom 1 - " + config.CustomRegex.Custom1,
+                "Custom 2 - " + config.CustomRegex.Custom2,
+                "Custom 3 - " + config.CustomRegex.Custom3,
                 "Exit"
-            };
+            ];
 
             var setting = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title($"{path}\n\n[{config.colors.highlightA}]Choose settings[/]")
-                    .HighlightStyle($"{config.colors.highlightB}")
+                    .Title($"{path}\n\n[{config.Colors.HighlightA}]Choose settings[/]")
+                    .HighlightStyle($"{config.Colors.HighlightB}")
                     .AddChoices(settings));
 
             if (setting == settings[0])
             {
-                config.custom_regex.custom_1 = AnsiConsole.Ask<string>("Enter regex: ");
+                config.CustomRegex.Custom1 = AnsiConsole.Ask<string>("Enter regex: ");
             }
             else if (setting == settings[1])
             {
-                config.custom_regex.custom_2 = AnsiConsole.Ask<string>("Enter regex: ");
+                config.CustomRegex.Custom2 = AnsiConsole.Ask<string>("Enter regex: ");
             }
-
             else if (setting == settings[2])
             {
-                config.custom_regex.custom_3 = AnsiConsole.Ask<string>("Enter regex: ");
+                config.CustomRegex.Custom3 = AnsiConsole.Ask<string>("Enter regex: ");
             }
             else if (setting == settings[^1])
             {
                 Save(config);
-                return true;
+                return;
             }
         }
     }

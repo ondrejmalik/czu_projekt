@@ -1,19 +1,61 @@
+namespace CzuProjekt;
+
+/// <summary>
+/// Represents the root configuration data loaded from or saved to a TOML config file.
+/// Contains color highlight settings and custom regex patterns.
+/// </summary>
 public class ConfigData
 {
-    public Colors colors { get; set; } = new Colors();
-    public CustomRegex custom_regex { get; set; } = new CustomRegex();
+    /// <summary>
+    /// Gets or sets the color highlight configuration.
+    /// </summary>
+    public Colors Colors { get; set; } = new Colors();
 
-    public class Colors
-    {
-        public string highlightA { get; set; } = string.Empty;
-        public string highlightB { get; set; } = string.Empty;
-        public string highlightC { get; set; } = string.Empty;
-    }
+    /// <summary>
+    /// Gets or sets the custom regular expression configuration.
+    /// </summary>
+    public CustomRegex CustomRegex { get; set; } = new CustomRegex();
+}
 
-    public class CustomRegex
-    {
-        public string custom_1 { get; set; } = string.Empty;
-        public string custom_2 { get; set; } = string.Empty;
-        public string custom_3 { get; set; } = string.Empty;
-    }
+/// <summary>
+/// Represents color settings used for highlighting UI elements.
+/// </summary>
+public class Colors
+{
+    /// <summary>
+    /// Gets or sets the primary highlight color (highlight A).
+    /// </summary>
+    public string HighlightA { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the secondary highlight color (highlight B).
+    /// </summary>
+    public string HighlightB { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the tertiary highlight color (highlight C).
+    /// </summary>
+    public string HighlightC { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Represents user-defined regular expression patterns.
+/// </summary>
+public class CustomRegex
+{
+    /// <summary>
+    /// Gets or sets the first custom regular expression.
+    /// </summary>
+    ///
+    public string Custom1 { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the second custom regular expression.
+    /// </summary>
+    public string Custom2 { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the third custom regular expression.
+    /// </summary>
+    public string Custom3 { get; set; } = string.Empty;
 }
