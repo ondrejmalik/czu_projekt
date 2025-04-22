@@ -6,7 +6,6 @@ namespace CzuProjekt;
 
 public static class Program
 {
-    [STAThread]
     public static void Main() => ListFilesInDirectory(".");
 
     /// <summary>
@@ -208,6 +207,8 @@ public static class Program
         {
             return null!;
         }
+
+        Console.WriteLine(pattern);
 
         Stopwatch sw = new Stopwatch();
         List<string> matches = new List<string>();

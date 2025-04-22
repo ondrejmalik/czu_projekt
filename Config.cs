@@ -10,10 +10,14 @@ namespace CzuProjekt;
 /// </summary>
 public static class Config
 {
-    private const string DefaultData = "[colors]" + "\n" + "highlight_a = \"blue\"" + "\n" + "highlight_b = \"green\"" +
-                                       "\n" + "highlight_c = \"red\"" + "\n" + "[custom_regex]" + "\n" +
-                                       "custom1 = \"d.\"" + "\n" + "custom2 = \"d*\"" + "\n" + "custom3 = \"d+\"" +
-                                       "\n";
+    private const string DefaultData = "[colors]" + "\n"
+                                                  + "highlight_a = 'blue'" + "\n"
+                                                  + "highlight_b = 'green'" + "\n"
+                                                  + "highlight_c = 'red'" + "\n"
+                                                  + "[custom_regex]" + "\n"
+                                                  + "custom1 = 'd.'" + "\n"
+                                                  + "custom2 = 'd*'" + "\n"
+                                                  + "custom3 = 'd+'" + "\n";
 
     const string ConfigFileName = "config.toml";
 
@@ -33,9 +37,14 @@ public static class Config
             if (File.Exists(pathFile))
             {
                 string fileData = File.ReadAllText(pathFile);
-                var model = Toml.ToModel<ConfigData>(fileData);
+                if (!string.IsNullOrWhiteSpace(fileData) &&
+                    Toml.TryToModel<ConfigData>(fileData, out var model, out var diagnostics))
+                {
+                    return CheckColorsValid(model);
+                }
 
-                return model;
+                Logger.LogError($"Invalid TOML format or empty file: ");
+                return DefaultConfig();
             }
 
             return DefaultConfig();
@@ -49,6 +58,36 @@ public static class Config
     }
 
     /// <summary>
+    ///  Returns Default config data if one of colors is invalid
+    /// <param name="model">model to check</param>
+    /// </summary>
+    private static ConfigData CheckColorsValid(ConfigData model)
+    {
+        if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
+                string.Equals(prop.Name, model.Colors.HighlightA, StringComparison.OrdinalIgnoreCase)))
+        {
+            Logger.LogError("Invalid color HighlighA.");
+            return DefaultConfig();
+        }
+
+        if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
+                string.Equals(prop.Name, model.Colors.HighlightB, StringComparison.OrdinalIgnoreCase)))
+        {
+            Logger.LogError("Invalid color HighlighB.");
+            return DefaultConfig();
+        }
+
+        if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
+                string.Equals(prop.Name, model.Colors.HighlightC, StringComparison.OrdinalIgnoreCase)))
+        {
+            Logger.LogError("Invalid color HighlighC.");
+            return DefaultConfig();
+        }
+
+        return model;
+    }
+
+    /// <summary>
     /// Creates a default configuration file with predefined data and returns a new config object.
     /// </summary>
     /// <returns>A new default <see cref="ConfigData"/> object.</returns>
@@ -57,7 +96,7 @@ public static class Config
         try
         {
             Logger.LogWarning("Config file not found, creating default config file.");
-            FileStream file = File.Create(PathDirectory);
+            FileStream file = File.Create(PathDirectory + ConfigFileName);
             file.Write(Encoding.UTF8.GetBytes(DefaultData));
             file.Close();
             return Toml.ToModel<ConfigData>(DefaultData);
@@ -84,6 +123,8 @@ public static class Config
             {
                 Logger.LogSuccess("Config file found, saving changes.");
                 string tomlOut = Toml.FromModel(config);
+                //make sure toml is in string literals and remvoe escaping
+                tomlOut = tomlOut.Replace("\"", "'").Replace(@"\\", @"\");
                 File.WriteAllText(pathFile, tomlOut);
             }
             else
@@ -225,9 +266,9 @@ public static class Config
             string path = $"> File > Config > Custom regex";
             string[] settings =
             [
-                "Custom 1 - " + config.CustomRegex.Custom1,
-                "Custom 2 - " + config.CustomRegex.Custom2,
-                "Custom 3 - " + config.CustomRegex.Custom3,
+                "Custom 1 - " + Markup.Escape(config.CustomRegex.Custom1),
+                "Custom 2 - " + Markup.Escape(config.CustomRegex.Custom2),
+                "Custom 3 - " + Markup.Escape(config.CustomRegex.Custom3),
                 "Exit"
             ];
 
