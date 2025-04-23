@@ -155,7 +155,7 @@ public static class Program
         string[] premadeActions =
         [
             "text in html tags",
-            "function signature"
+            "C# function signature"
         ];
         string[] customActions =
         [
@@ -208,7 +208,6 @@ public static class Program
             return null!;
         }
 
-        Console.WriteLine(pattern);
 
         Stopwatch sw = new Stopwatch();
         List<string> matches = new List<string>();
@@ -223,8 +222,27 @@ public static class Program
             }
             else
             {
+                bool caseSensitive = false;
+                while (true)
+                {
+                    var a = AnsiConsole.Ask<string>(
+                        $"do you want  [{config.Colors.HighlightB}]case sensitive[/] regex?[{config.Colors.HighlightC}](Y/N)[/]");
+                    switch (a.ToLower())
+                    {
+                        case "y":
+                            caseSensitive = true;
+                            break;
+                        case "n":
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    break;
+                }
+
                 sw.Start();
-                matches = ListLinesByPattern(fileChoice, pattern, config);
+                matches = ListLinesByPattern(fileChoice, pattern, caseSensitive, config);
             }
 
             AnsiConsole.WriteLine();
@@ -256,10 +274,15 @@ public static class Program
     /// <summary>
     /// Lists all lines that match the regex pattern.
     /// </summary>
-    static List<string> ListLinesByPattern(string fileChoice, string pattern, ConfigData config)
+    static List<string> ListLinesByPattern(string fileChoice, string pattern, bool caseSensitive, ConfigData config)
     {
         List<string> matchValues = new List<string>();
-        RegexOptions options = RegexOptions.Multiline;
+        RegexOptions options = RegexOptions.Multiline | RegexOptions.Compiled;
+        if (!caseSensitive)
+        {
+            options |= RegexOptions.IgnoreCase;
+        }
+
         int matchCount = 0;
         var lines = File.ReadAllLines(fileChoice);
 
