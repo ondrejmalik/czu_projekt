@@ -1,0 +1,333 @@
+using System;
+using System.Collections.Generic;
+using osu.Framework.Extensions;
+using osu.Framework.Graphics;
+using osu.Framework.Graphics.Shapes;
+using osu.Framework.Logging;
+using osuTK;
+using Tetris.Game.Game.Tetrimino;
+
+namespace Tetris.Game.Game.Playfield;
+
+public partial class PlayField : PlayFieldBase
+{
+    /// <summary>
+    /// Number of lines.
+    /// This is used to send garbage to the opponent.
+    /// Fires OnClearedLinesChanged event.
+    /// </summary>
+    public int ClearedLines
+    {
+        get => clearedLines;
+        set
+        {
+            clearedLines = value;
+            OnClearedLinesChanged();
+        }
+    }
+
+    public string GameStatsToString()
+    {
+        return $"Cleared Lines: {ClearedLines}      " +
+               $"Level: {Level}     " +
+               $"Time: {TimeInSeconds}s      " +
+               $"Clears per minute: {Cpm.ToString().Substring(0, Math.Min(Cpm.ToString().Length, 5))}     ";
+    }
+
+    /// <summary>
+    /// Clears per minute.
+    /// </summary>
+    public double Cpm => ClearedLines / (Clock.CurrentTime / 60 / 1000);
+
+    /// <summary>
+    /// Time in seconds since the game started.
+    /// </summary>
+    public int TimeInSeconds
+    {
+        get
+        {
+            return (int)((Clock.CurrentTime - loadTime) / 1000);
+        }
+    }
+
+    /// <summary>
+    /// ClearedLines rounded to the nearest 10.
+    /// </summary>
+    public int Level => (int)Math.Round((decimal)(ClearedLines / 10 + 1));
+
+    /// <returns>If piece colided with bottom of playfield.</returns>
+    internal bool BottomCollisionDetection()
+    {
+        for (int i = 0; i < Piece.GridPos.Count; i++)
+        {
+            if (Piece.GridPos[i].Item2 == 19)
+            {
+                place();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the piece collides with the walls or other pieces.
+    /// </summary>
+    /// <param name="diff">This moves the piece collision detection left or right</param>
+    /// <returns>If the piece collided with anything</returns>
+    internal bool CollisionDetection(int diff)
+    {
+        for (int i = 0; i < Piece.GridPos.Count; i++)
+        {
+            int index = Piece.GridPos[i].Item1 + diff + Piece.GridPos[i].Item2 * 10;
+            if (index < 0 || index > 199)
+            {
+                return true;
+            }
+
+            if (Occupied[index])
+            {
+                if (diff == 0) { place(); }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Makes Occupied indexes under the piece true.
+    /// And adds new piece from bag queue to playfield.
+    /// </summary>
+    private void place()
+    {
+        foreach (var pos in Piece.GridPos)
+        {
+            Colour4 c = Piece.PieceColour;
+            droppedContainer.Add(new Box()
+            {
+                Size = new Vector2(45, 45),
+                Position = new Vector2(PlayField.x[pos.Item1] + 5, PlayField.y[pos.Item2] + 5),
+
+                Colour = c,
+            });
+
+            OccupiedSet o;
+            o = Occupied[pos.Item1 + pos.Item2 * 10 - 10];
+            o.O = true;
+            o.P = Piece.PieceType;
+            Occupied[pos.Item1 + pos.Item2 * 10 - 10] = o;
+        }
+
+        lastPieceGridPos = Piece.GridPos; // used in sending garbage
+        expireTetrimino();
+        //check if new piece overlaps existing piece
+        foreach (var pos in Piece.GridPos)
+        {
+            if (Occupied[pos.Item1 + pos.Item2 * 10] == true)
+            {
+                Logger.Log("Game Over");
+                OnGameOverChanged(true);
+                break;
+            }
+        }
+
+
+        int diff = clearLine();
+        if (!isOnline && OpponentPlayField != null)
+        {
+            for (int i = 0; i < diff; i++)
+            {
+                OpponentPlayField.ScheduleAddGarbage(1, lastPieceGridPos);
+            }
+        }
+
+        ClearedLines += diff;
+        Logger.Log(ClearedLines.ToString());
+
+        box.Add(Piece);
+        HoldPreview.Hold.CanHold = true;
+        HoldPreview.UpdatePreviewTetriminos();
+    }
+
+    /// <summary>
+    /// destroys current piece and creates new piece from bag queue.
+    /// </summary>
+    private void expireTetrimino()
+    {
+        Piece.Expire();
+        Piece = new Tetrimino.Tetrimino(HoldPreview.Hold.Bag.Dequeue(), 4, 0, this, isOpponent, isOnline && isOpponent);
+    }
+
+    /// <summary>
+    /// looks for lines that are full and clears them.
+    /// </summary>
+    /// <returns>number of cleared lines</returns>
+    private int clearLine()
+    {
+        bool clear = false;
+        int cleared = 0;
+        for (int i = 0; i < Occupied.Count; i += 10)
+        {
+            clear = true;
+            for (int j = i; j < i + 10; j++)
+            {
+                if (!Occupied[j])
+                {
+                    clear = false;
+                    break;
+                }
+            }
+
+            if (clear)
+            {
+                cleared++;
+                for (int j = i; j < i + 10; j++)
+                {
+                    newstackDown(j);
+                }
+            }
+        }
+
+        redrawOccupied();
+        return cleared;
+    }
+
+    #region Stack Up Down
+
+    /// <summary>
+    /// Starts recursive function to move stack down
+    /// </summary>
+    /// <param name="j">index of the vertical stack</param>
+    private void newstackDown(int j)
+    {
+        Occupied[j].O = false;
+        recurseStackDown(j);
+    }
+
+    /// <summary>
+    /// Recursively moves stack down until j is less than 10
+    /// </summary>
+    /// <param name="j"></param>
+    private void recurseStackDown(int j)
+    {
+        if (j > 10)
+        {
+            Occupied[j].O = Occupied[j - 10].O;
+            Occupied[j].P = Occupied[j - 10].P;
+            recurseStackDown(j - 10);
+        }
+    }
+
+    /// <summary>
+    /// Recursively moves stack up until j is less than 10
+    /// </summary>
+    /// <param name="j"></param>
+    private void recurseStackUp(int j)
+    {
+        if (j < 190)
+        {
+            if (j > 10)
+            {
+                Occupied[j - 10].O = Occupied[j].O;
+                Occupied[j - 10].P = Occupied[j].P;
+            }
+
+            recurseStackUp(j + 10);
+        }
+    }
+
+    #endregion
+
+    #region Add Garbage Line
+
+    /// <summary>
+    /// Adds garbage lines to the playfield with empty holes where the of the blocks in enemy piece was.
+    /// </summary>
+    /// <param name="lines">number of garbage lines</param>
+    /// <param name="emptyGridPos">Grid pos of enemy piece that cleared line(s)</param>
+    private void addGarbage(int lines, List<(int, int)> emptyGridPos = null)
+    {
+        // TODO: maybe add empty hole in place of last enemy piece instead of line
+        for (int i = 0; i < lines; i++)
+        {
+            int index = 2;
+            if (emptyGridPos != null)
+            {
+                index = emptyGridPos[Random.Shared.Next(3)].Item1;
+            }
+
+            addGarbageLine(index); // for now only add empty hole where the enemy piece was
+        }
+
+        OpponentPlayField.ClearedLines += lines;
+    }
+
+    /// <summary>
+    /// Adds a line of garbage to playfield.
+    /// </summary>
+    /// <param name="emptyIndex"></param>
+    private void addGarbageLine(int emptyIndex)
+    {
+        try
+        {
+            for (int i = 0; i < 10; i++) // move up each X Line
+            {
+                recurseStackUp(i);
+            }
+
+            //------------------ this checks for each Y line if there is garbage and if there is it goes to start of line above it
+            bool foundGarbage = false;
+            int lineStart = Occupied.Count - 10;
+            for (int i = Occupied.Count - 1; i >= 0; i = i - 1)
+            {
+                // if colour of occupied[i] is colour of garbage
+                if (PieceTypeToColour(Occupied[i].P) == PieceTypeToColour(PieceType.Garbage))
+
+                {
+                    foundGarbage = true;
+                    i = lineStart - 10; // this goes to start of line above
+                }
+
+                // if i is at end of line and not found garbage then break
+                if (i % 10 == 0)
+                {
+                    lineStart = i;
+                    break;
+                }
+            }
+            //------------------ this add line of garbage at lineStart line and add empty hole where the enemy piece was (emptyIndex)
+
+            for (int j = lineStart; j < lineStart + 10; j++)
+            {
+                if (emptyIndex + lineStart == j) // add empty hole
+                {
+                    Occupied[j].O = false;
+                    continue;
+                }
+
+                Occupied[j].O = true;
+                Occupied[j].P = PieceType.Garbage;
+            }
+
+            foreach (var pos in Piece.GridPos)
+            {
+                if (Occupied[pos.Item1 + pos.Item2 * 10].O)
+                {
+                    Piece.MoveUp();
+                    Piece.SetDrawPos();
+                }
+            }
+
+            redrawOccupied();
+        }
+        catch (Exception e)
+        {
+            Logger.Log(e.Message);
+        }
+    }
+
+    #endregion
+}
+

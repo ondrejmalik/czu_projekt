@@ -15,18 +15,45 @@ public static class Program
     static void ListFilesInDirectory(string directoryChoice)
     {
         ConfigData config = Config.Load();
+        bool orderByRecency = false;
         while (true)
         {
-            string[] files = Directory.GetFiles(directoryChoice)
-                .Select(Path.GetFileName)
-                .Where(f => f != null)
-                .Cast<string>()
-                .ToArray();
-            string[] configSection =
-            [
-                "Config",
-                "----------------"
-            ];
+            string[] files;
+
+            if (orderByRecency)
+            {
+                files = Directory.GetFiles(directoryChoice).OrderBy(f => File.GetLastWriteTime(f)).Reverse().ToArray();
+            }
+            else
+            {
+                files = Directory.GetFiles(directoryChoice)
+                    .Select(Path.GetFileName)
+                    .Where(f => f != null)
+                    .Cast<string>()
+                    .Order()
+                    .ToArray();
+            }
+
+            string[] configSection;
+            if (orderByRecency)
+            {
+                configSection =
+                [
+                    "Config",
+                    "Order by: Recency",
+                    "----------------"
+                ];
+            }
+            else
+            {
+                configSection =
+                [
+                    "Config",
+                    "Order by Name",
+                    "----------------"
+                ];
+            }
+
             string[] choices = configSection.Concat(files).Append("Exit").ToArray();
 
             var fileChoice = AnsiConsole.Prompt(
@@ -43,6 +70,12 @@ public static class Program
             }
 
             if (fileChoice == choices[1])
+            {
+                orderByRecency = !orderByRecency;
+                continue;
+            }
+
+            if (fileChoice == choices[2])
             {
                 // ----------------
                 continue;
@@ -277,7 +310,7 @@ public static class Program
     static List<string> ListLinesByPattern(string fileChoice, string pattern, bool caseSensitive, ConfigData config)
     {
         List<string> matchValues = new List<string>();
-        RegexOptions options = RegexOptions.Multiline | RegexOptions.Compiled;
+        RegexOptions options = RegexOptions.Multiline;
         if (!caseSensitive)
         {
             options |= RegexOptions.IgnoreCase;
