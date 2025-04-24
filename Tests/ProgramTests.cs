@@ -29,7 +29,7 @@ public class ProgramTests : IDisposable
         var pattern = @"Hello";
 
         var matches = (List<string>)_listLinesByPatternMethod?.Invoke(null,
-            new object[] { _testFilePath, pattern, _testConfig })!;
+            [_testFilePath, pattern, _testConfig])!;
 
         matches.Should().HaveCount(2);
         matches.Should().Contain("Hello");
@@ -42,7 +42,7 @@ public class ProgramTests : IDisposable
         var pattern = @"Hello";
 
         var matches = (List<string>)_listLinesByPatternMethod!.Invoke(null,
-            new object[] { _testFilePath, pattern, _testConfig })!;
+            [_testFilePath, pattern, _testConfig])!;
 
         matches.Should().BeEmpty();
     }
@@ -56,7 +56,7 @@ public class ProgramTests : IDisposable
         var replacement = "Hi";
 
         _replaceTextByPatternMethod!.Invoke(null,
-            new object[] { _testFilePath, pattern, replacement, _testConfig });
+            [_testFilePath, pattern, replacement, _testConfig]);
         var result = File.ReadAllText(_testFilePath);
 
         result.Should().Be("Hi World\nTest Hi\nHi Test");
@@ -71,7 +71,7 @@ public class ProgramTests : IDisposable
         var replacement = "Hi";
 
         _replaceTextByPatternMethod!.Invoke(null,
-            new object[] { _testFilePath, pattern, replacement, _testConfig });
+            [_testFilePath, pattern, replacement, _testConfig]);
         var result = File.ReadAllText(_testFilePath);
 
         result.Should().Be(originalText);

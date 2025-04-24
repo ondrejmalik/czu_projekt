@@ -28,7 +28,7 @@ public static class Logger
         LogToFile("Success - " + message);
     }
 
-    public static void LogToFile(string message)
+    private static void LogToFile(string message)
     {
         try
         {
@@ -39,7 +39,7 @@ public static class Logger
 
             string logFullPath = Path.Combine(LogFilePath, LogFileName);
 
-            // Write to log file - this will create it if doesn't exist
+            // Write to log file - this will create it if it doesn't exist
             using (StreamWriter writer = File.AppendText(logFullPath))
             {
                 writer.WriteLine($"{DateTime.Now}: {message}");

@@ -22,7 +22,7 @@ public static class Program
 
             if (orderByRecency)
             {
-                files = Directory.GetFiles(directoryChoice).OrderBy(f => File.GetLastWriteTime(f)).Reverse().ToArray();
+                files = Directory.GetFiles(directoryChoice).OrderBy(File.GetLastWriteTime).Reverse().ToArray();
             }
             else
             {

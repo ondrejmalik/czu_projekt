@@ -38,7 +38,7 @@ public static class Config
             {
                 string fileData = File.ReadAllText(pathFile);
                 if (!string.IsNullOrWhiteSpace(fileData) &&
-                    Toml.TryToModel<ConfigData>(fileData, out var model, out var diagnostics))
+                    Toml.TryToModel<ConfigData>(fileData, out var model, out _))
                 {
                     return CheckColorsValid(model);
                 }
@@ -66,21 +66,21 @@ public static class Config
         if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
                 string.Equals(prop.Name, model.Colors.HighlightA, StringComparison.OrdinalIgnoreCase)))
         {
-            Logger.LogError("Invalid color HighlighA.");
+            Logger.LogError("Invalid color HighlightA.");
             return DefaultConfig();
         }
 
         if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
                 string.Equals(prop.Name, model.Colors.HighlightB, StringComparison.OrdinalIgnoreCase)))
         {
-            Logger.LogError("Invalid color HighlighB.");
+            Logger.LogError("Invalid color HighlightB.");
             return DefaultConfig();
         }
 
         if (!typeof(Color).GetProperties(BindingFlags.Static | BindingFlags.Public).Any(prop =>
                 string.Equals(prop.Name, model.Colors.HighlightC, StringComparison.OrdinalIgnoreCase)))
         {
-            Logger.LogError("Invalid color HighlighC.");
+            Logger.LogError("Invalid color HighlightC.");
             return DefaultConfig();
         }
 
@@ -123,7 +123,7 @@ public static class Config
             {
                 Logger.LogSuccess("Config file found, saving changes.");
                 string tomlOut = Toml.FromModel(config);
-                //make sure toml is in string literals and remvoe escaping
+                //make sure toml is in string literals and remove escaping
                 tomlOut = tomlOut.Replace("\"", "'").Replace(@"\\", @"\");
                 File.WriteAllText(pathFile, tomlOut);
             }
