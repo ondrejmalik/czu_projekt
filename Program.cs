@@ -22,7 +22,11 @@ public static class Program
 
             if (orderByRecency)
             {
-                files = Directory.GetFiles(directoryChoice).OrderBy(File.GetLastWriteTime).Reverse().ToArray();
+                files = Directory.GetFiles(directoryChoice)
+                    .OrderBy(File.GetLastWriteTime)
+                    .Reverse()
+                    .Select(Markup.Escape)
+                    .ToArray();
             }
             else
             {
@@ -31,6 +35,7 @@ public static class Program
                     .Where(f => f != null)
                     .Cast<string>()
                     .Order()
+                    .Select(Markup.Escape)
                     .ToArray();
             }
 
@@ -59,7 +64,7 @@ public static class Program
             var fileChoice = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title($"> File\n\n[{config.Colors.HighlightA}]Choose a file[/]")
-                    .PageSize(10)
+                    .PageSize(15)
                     .HighlightStyle($"{config.Colors.HighlightB}")
                     .AddChoices(choices));
 
