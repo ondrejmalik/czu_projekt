@@ -215,7 +215,7 @@ public static class Program
         else if (action == actions[1])
         {
             pattern =
-                @"(?<= *)((((public)|(static)|(private)|(protected)|(override)|(virtual)|(extern)|(internal)) )+(\w{1}\S*)(\w{1}\S*) \w{1}\S*\(.*\))";
+                @"(((public)|(static)|(private)|(protected)|(override)|(virtual)|(extern)|(internal))( )|(\n))+(\w\S*)( |\n)\w\S*\(.*\)";
         }
 
         if (action == actions[2])
@@ -360,8 +360,7 @@ public static class Program
     /// <summary>
     /// Replaces all matches of the regex pattern in the file with the given replacement.
     /// </summary>
-    static void ReplaceTextByPattern(string fileChoice, string pattern, string replacement,
-        ConfigData config)
+    static void ReplaceTextByPattern(string fileChoice, string pattern, string replacement, ConfigData config)
     {
         var contents = File.ReadAllText(fileChoice);
         int replacementCount = 0;

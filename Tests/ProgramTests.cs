@@ -29,7 +29,7 @@ public class ProgramTests : IDisposable
         var pattern = @"Hello";
 
         var matches = (List<string>)_listLinesByPatternMethod?.Invoke(null,
-            [_testFilePath, pattern, _testConfig])!;
+            [_testFilePath, pattern, true, _testConfig])!;
 
         matches.Should().HaveCount(2);
         matches.Should().Contain("Hello");
@@ -42,7 +42,7 @@ public class ProgramTests : IDisposable
         var pattern = @"Hello";
 
         var matches = (List<string>)_listLinesByPatternMethod!.Invoke(null,
-            [_testFilePath, pattern, _testConfig])!;
+            [_testFilePath, pattern, true, _testConfig])!;
 
         matches.Should().BeEmpty();
     }
