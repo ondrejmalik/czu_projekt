@@ -1,0 +1,275 @@
+Long html code | Access World Forums
+Home
+Forums
+New posts
+Search forums
+What's new
+Featured content
+New posts
+New profile posts
+Latest activity
+Members
+Current visitors
+New profile posts
+Search profile posts
+Log in
+Register
+What's new
+Search
+Search
+Everywhere
+Threads
+This forum
+This thread
+Search titles only
+By:
+Search
+Advanced search…
+New posts
+Search forums
+Install the app
+Install
+How to install the app on iOS
+Note:
+ This feature may not be available in some browsers.
+Home
+Forums
+Microsoft Access Discussion
+Modules &amp; VBA
+ 
+ 
+ 
+ 
+ 
+ (adsbygoogle = window.adsbygoogle || [[[[]]]]).push({}); 
+ 
+ 
+JavaScript is disabled. For a better experience, please enable JavaScript in your browser before proceeding.
+You are using an out of date browser. It  may not display this or other websites correctly.
+You should upgrade or use an 
+alternative browser
+.
+(1 Viewer)
+Thread starter
+Thread starter
+Joy83
+Start date
+Start date
+Jan 19, 2022
+J
+Joy83
+Member
+Local time
+Today, 06:59
+Joined
+Jan 9, 2020
+Messages
+116
+Jan 19, 2022
+Hi,
+ 
+ 
+ 
+ 
+ 
+ (adsbygoogle = window.adsbygoogle || [[[[]]]]).push({}); 
+ 
+ 
+&nbsp;
+Minty
+AWF VIP
+Local time
+Today, 14:59
+Joined
+Jul 26, 2013
+Messages
+10,640
+Jan 19, 2022
+What is the actual problem? 
+&nbsp;
+S
+sonic8
+AWF VIP
+Local time
+Today, 15:59
+Joined
+Oct 27, 2015
+Messages
+1,234
+Jan 19, 2022
+Joy83 said:
+Click to expand...
+One approach to debugging it would be to write it to a text file and then open that with an editor suitable for HTML.
+ 
+ 
+ 
+ 
+ 
+ (adsbygoogle = window.adsbygoogle || [[[[]]]]).push({}); 
+ 
+ 
+&nbsp;
+P
+plog
+Banishment Pending
+Local time
+Today, 08:59
+Joined
+May 11, 2011
+Messages
+11,957
+Jan 19, 2022
+A sample demonstrating your issue woud  help.  Without that I would suggest using double quotes on the outside and single quotes on the inside, or vice versa:
+&nbsp;
+J
+Joy83
+Member
+Local time
+Today, 06:59
+Joined
+Jan 9, 2020
+Messages
+116
+Jan 19, 2022
+How to deal with “” inside
+&nbsp;
+Minty
+AWF VIP
+Local time
+Today, 14:59
+Joined
+Jul 26, 2013
+Messages
+10,640
+Jan 19, 2022
+Put double quotes around the relevant bits 
+&nbsp;
+P
+plog
+Banishment Pending
+Local time
+Today, 08:59
+Joined
+May 11, 2011
+Messages
+11,957
+Jan 19, 2022
+Double on outside, single on the inside or vice versa.
+W3Schools offers free online tutorials, references and exercises in all the major languages of the web. Covering popular subjects like HTML, CSS, JavaScript, Python, SQL, Java, and many, many more.
+&nbsp;
+S
+sxschech
+Registered User.
+Local time
+Today, 06:59
+Joined
+Mar 2, 2010
+Messages
+808
+Jan 19, 2022
+I used chr(34) to represent the double quote like this:
+stMessage = &quot;&lt;BODY style=&quot; &amp; Chr(34) &amp; &quot;font-size:11pt;font-family:Calibri&quot; &amp; Chr(34) &amp; &quot;&gt;&quot;
+&nbsp;
+T
+tonyedented
+New member
+Local time
+Today, 19:29
+Joined
+Apr 5, 2022
+Messages
+2
+Apr 5, 2022
+Here are some HTML tutorials that will help you with the long codes.
+&nbsp;
+Reactions:
+Joy83
+Similar threads
+D
+Darshan Hiranandani : How to Open Outlook in HTML Format Using DoCmd.SendObject in Access
+darshanhiranandani24
+Jan 13, 2025
+General
+Replies
+3
+Views
+152
+Jan 13, 2025
+arnelgp
+D
+Darshan Hiranandani : How to Open Outlook in HTML Format Instead of Plain Text via VBA in Access?
+darshanhiranandani24
+Nov 27, 2024
+General
+Replies
+1
+Views
+178
+Nov 27, 2024
+Minty
+J
+Search for possible declarations
+Josef P.
+Mar 4, 2025
+Modules &amp; VBA
+Replies
+9
+Views
+347
+Mar 5, 2025
+sonic8
+S
+E
+Emmanuel Katto : How to Set Outlook to Open in HTML Format from Access Email
+emmanuelkatto23
+Jan 6, 2025
+General
+Replies
+2
+Views
+166
+Jan 6, 2025
+Trevor G
+P
+Python - Hidden Text / Html Mail
+python1337
+Feb 7, 2025
+General
+Replies
+5
+Views
+309
+Feb 8, 2025
+arnelgp
+Users who are viewing this thread
+Total:&nbsp;2 (members:&nbsp;0, guests:&nbsp;2)
+Share:
+Facebook
+ 
+X (Twitter)
+LinkedIn
+Reddit
+Pinterest
+Tumblr
+WhatsApp
+Email
+Share
+Link
+Home
+Forums
+Microsoft Access Discussion
+Modules &amp; VBA
+Contact us
+Terms and rules
+Privacy policy
+Help
+Home
+RSS
+Community platform by XenForo
+&reg;
+ 
+&copy; 2010-2024 XenForo Ltd.
+ 
+Back
+Top
+Bottom
