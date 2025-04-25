@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using Spectre.Console;
 using Tomlyn;
 
@@ -86,6 +87,7 @@ public static class Config
 
         return model;
     }
+
 
     /// <summary>
     /// Creates a default configuration file with predefined data and returns a new config object.
@@ -277,24 +279,51 @@ public static class Config
                     .Title($"{path}\n\n[{config.Colors.HighlightA}]Choose settings[/]")
                     .HighlightStyle($"{config.Colors.HighlightB}")
                     .AddChoices(settings));
+            if (setting != settings[^1])
+            {
+                string newRegex = AnsiConsole.Ask<string>("Enter regex: ");
 
-            if (setting == settings[0])
-            {
-                config.CustomRegex.Custom1 = AnsiConsole.Ask<string>("Enter regex: ");
+                try
+                {
+                    // Test if the regex compiles
+                    _ = Regex.Match("", newRegex);
+                }
+                catch (ArgumentException)
+                {
+                    Logger.LogError("Invalid regex.");
+                    continue;
+                }
+
+
+                if (setting == settings[0])
+                {
+                    config.CustomRegex.Custom1 = newRegex;
+                }
+                else if (setting == settings[1])
+                {
+                    config.CustomRegex.Custom2 = newRegex;
+                }
+                else if (setting == settings[2])
+                {
+                    config.CustomRegex.Custom3 = newRegex;
+                }
             }
-            else if (setting == settings[1])
+
+            try
             {
-                config.CustomRegex.Custom2 = AnsiConsole.Ask<string>("Enter regex: ");
-            }
-            else if (setting == settings[2])
-            {
-                config.CustomRegex.Custom3 = AnsiConsole.Ask<string>("Enter regex: ");
-            }
-            else if (setting == settings[^1])
-            {
+                // Test if the regex compiles
+                _ = Regex.Match("", config.CustomRegex.Custom1);
+                _ = Regex.Match("", config.CustomRegex.Custom2);
+                _ = Regex.Match("", config.CustomRegex.Custom3);
                 Save(config);
-                return;
             }
+            catch (ArgumentException)
+            {
+                Logger.LogError("Invalid regex.");
+                continue;
+            }
+
+            return;
         }
     }
 }

@@ -1,0 +1,97 @@
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::thread::JoinHandle;
+use std::thread::{self};
+use std::time::Instant;
+
+pub fn prepare(rozvrh: [&str; 50]) -> [u8; 25] {
+    let mut hodiny: HashMap<&str, u8> = HashMap::new();
+    let mut unique_hodina_id: u8 = 0;
+    for hodina in rozvrh {
+        if hodiny.get(hodina).is_none() {
+            hodiny.insert(hodina, unique_hodina_id);
+            unique_hodina_id += 1;
+        }
+    }
+    let mut bin_rozvrh: [u8; 25] = [0; 25];
+    let mut bin_rozvrh_index = 0;
+    let mut stack_count: u8 = 0;
+    let mut n1: u8 = 0;
+    let mut n2: u8 = 0;
+    unsafe {
+        for i in 0..rozvrh.len() {
+            match hodiny.get(rozvrh.get_unchecked(i)) {
+                None => {
+                    println!("error inserting to bin array")
+                }
+                Some(hodina) => {
+                    if stack_count == 0 {
+                        n1 = *hodina;
+                        stack_count += 1;
+                    } else {
+                        n2 = *hodina;
+                        bin_rozvrh[bin_rozvrh_index] = pack(n1, n2);
+                        bin_rozvrh_index += 1;
+                        stack_count = 0;
+                    }
+                }
+            }
+        }
+    }
+    bin_rozvrh
+}
+fn pack(n1: u8, n2: u8) -> u8 {
+    (n1 << 4) | (n2 & 0x0F)
+}
+fn _unpack(packed: u8) -> (u8, u8) {
+    let n1 = packed >> 4;
+    let n2 = packed & 0x0F;
+    (n1, n2)
+}
+
+pub fn run(bin_rozvrh: [u8; 25]) {
+    let queue = Arc::new(Mutex::new(Vec::with_capacity(1_000_000)));
+    let threadpool = rayon::ThreadPoolBuilder::new()
+        .num_threads(10)
+        .build()
+        .unwrap();
+    threadpool.install(|| {
+        rayon::scope(|s| {
+            for thread_id in 0..10 {
+                let queue = Arc::clone(&queue);
+                s.spawn(move |_| {
+                    generate(thread_id, bin_rozvrh, queue);
+                });
+            }
+        });
+    });
+    println!(
+        "----------------Queue length:{}",
+        queue.lock().unwrap().len()
+    );
+    assert!(queue.lock().unwrap().len() == 1_000_000);
+}
+pub fn generate(thread_id: i32, bin_rozvrh: [u8; 25], generator_queue: Arc<Mutex<Vec<[u8; 25]>>>) {
+    let start = Instant::now();
+    let mut local_queue = Vec::with_capacity(100_000);
+
+    for _ in 0..100_000 {
+        let mut shuffled = bin_rozvrh;
+        fastrand::shuffle(&mut shuffled);
+        let e = local_queue.push(shuffled);
+    }
+    {
+        let mut queue = generator_queue.lock().unwrap();
+        queue.extend(local_queue);
+    }
+    println!("{:?}, Id {}", start.elapsed(), thread_id);
+}
+fn evaluate(evaluator_queue: Arc<Mutex<Vec<[u8; 25]>>>) -> JoinHandle<()> {
+    let evaluator = thread::spawn(move || {
+        let queue = evaluator_queue.lock().unwrap();
+        println!("{}", queue[0].len());
+        println!("Queue length final:{}", queue.len());
+    });
+    evaluator
+}
+
